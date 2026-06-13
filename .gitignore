@@ -1,0 +1,24 @@
+# Large data files
+[PUB] India_runs_data_and_ai_challenge/
+[PUB] India_runs_data_and_ai_challenge.zip
+*.jsonl
+*.zip
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS and IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Not needed in repo
+*.docx
+*.log
+read_docx.py
+challenge.md
+ourgithubrepo.md
