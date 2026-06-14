@@ -91,7 +91,7 @@ def slide_1(c):
     y = PH - 270
     c.setFont("Helvetica-Bold", 14)
     c.setFillColor(C_HEAD)
-    c.drawString(65, y, "Team Name :  Prince Jain")
+    c.drawString(65, y, "Team Name :  NoTone")
     y -= 32
     c.drawString(65, y, "Team Leader Name :  Prince Jain")
     y -= 32

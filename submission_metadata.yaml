@@ -5,7 +5,7 @@
 # ============================================================================
 # Team identity
 # ============================================================================
-team_name: "Prince Jain"
+team_name: "NoTone"
 
 primary_contact:
   name: "Prince Jain"
@@ -57,13 +57,14 @@ ai_usage_summary: |
 # Approach summary
 # ============================================================================
 methodology_summary: |
-  Offline ranker for the Senior AI Engineer role. First pass filters out honeypot
-  profiles by catching timeline contradictions and bogus skill claims. Second pass
-  scores candidates on YoE fit, title relevance, vector-DB/search/embedding skills,
-  and actual keyword evidence in their job descriptions. Third pass applies platform
-  signal multipliers (response rate, login recency, notice period, GitHub activity)
-  so inactive or unresponsive candidates drop down the list. Ties break on candidate ID.
-  Runs in about 9 seconds on a single CPU core for 100K profiles.
+  Offline ranker for the Senior AI Engineer role. First pass filters honeypot profiles
+  by catching timeline contradictions and bogus skill claims. Second pass scores on
+  four signal groups: technical fit (verified Redrob assessments + self-reported skills +
+  recency-weighted career keywords), role fit (title, YoE, company type, location),
+  engagement (response rate, login recency, notice period, GitHub, interview completion),
+  and tiebreakers (education tier, recruiter saves, certifications). LangChain-only
+  backgrounds and career trajectory regressions get deprioritized. Profile summaries
+  are mined for retrieval/search mentions. About 10 seconds on a single CPU core.
 
 # ============================================================================
 # Declarations
