@@ -158,7 +158,7 @@ def build_pdf(filename="approach_deck.pdf"):
     
     story.append(Paragraph("How a candidate gets a score", subheading_style))
     story.append(Paragraph(
-        "Each candidate goes through three checks: (1) honeypot filter — fail means instant discard, "
+        "Each candidate goes through three checks: (1) honeypot filter, fail means instant discard, "
         "(2) feature scoring on four weighted dimensions, (3) behavioral multiplier adjustment.",
         body_style
     ))
@@ -271,7 +271,7 @@ def build_pdf(filename="approach_deck.pdf"):
     story.append(Spacer(1, 0.15 * inch))
     
     story.append(Paragraph("Who shows up at the top?", subheading_style))
-    story.append(Paragraph("- Top 10 are Senior AI/ML/NLP Engineers from product companies — people with real vector DB and search infrastructure experience, 5-9 years in, actively responding to recruiters.", bullet_style))
+    story.append(Paragraph("- Top 10 are Senior AI/ML/NLP Engineers from product companies, people with real vector DB and search infrastructure experience, 5-9 years in, actively responding to recruiters.", bullet_style))
     story.append(Paragraph("- Zero honeypots in the output. All 80 synthetic profiles were caught by the filter.", bullet_style))
     story.append(Spacer(1, 0.1 * inch))
     
@@ -286,7 +286,7 @@ def build_pdf(filename="approach_deck.pdf"):
     story.append(Spacer(1, 0.15 * inch))
     
     story.append(Paragraph("Why these tools?", subheading_style))
-    story.append(Paragraph("- <b>Python stdlib (json, csv, datetime, argparse):</b> The ranking step has zero external dependencies. That's deliberate — nothing to install, nothing to break, works on any Python 3.9+ environment.", bullet_style))
+    story.append(Paragraph("- <b>Python stdlib (json, csv, datetime, argparse):</b> The ranking step has zero external dependencies. Nothing to install, nothing to break, works on any Python 3.9+ environment.", bullet_style))
     story.append(Paragraph("- <b>ReportLab:</b> For generating this PDF. Only dependency outside stdlib, and it's not part of the ranking pipeline.", bullet_style))
     story.append(Paragraph("- <b>Git:</b> Version control with actual iterative commit history.", bullet_style))
     story.append(PageBreak())
@@ -298,7 +298,7 @@ def build_pdf(filename="approach_deck.pdf"):
     assets_data = [
         ["Asset", "Details"],
         ["GitHub repo", "https://github.com/princejain756/Data-AiChallengeHack2skill"],
-        ["Ranked output", "prince_jain.csv — 100 candidates, validated"],
+        ["Ranked output", "prince_jain.csv, 100 candidates, validated"],
         ["Metadata", "submission_metadata.yaml"],
         ["This deck", "approach_deck.pdf (10 slides)"],
         ["Entry point", "python rank.py --candidates ./candidates.jsonl --out ./prince_jain.csv"]

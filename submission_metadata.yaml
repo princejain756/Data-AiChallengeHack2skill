@@ -1,4 +1,4 @@
-# Redrob Hackathon — Submission Metadata
+# Redrob Hackathon - Submission Metadata
 #
 # Filled in for Stage 3 validation review.
 
@@ -48,7 +48,7 @@ ai_tools_used:
   - "GitHub Copilot"
 
 ai_usage_summary: |
-  I used Claude to bounce ideas off during development — mainly for debugging tricky
+  I used Claude to bounce ideas off during development, mainly for debugging tricky
   edge cases in the honeypot detection and sanity-checking my scoring weights.
   Copilot handled autocomplete. The ranking script itself runs fully offline with
   zero external API calls.
