@@ -1,0 +1,76 @@
+# Redrob Hackathon — Submission Metadata
+#
+# Filled in for Stage 3 validation review.
+
+# ============================================================================
+# Team identity
+# ============================================================================
+team_name: "Prince Jain"
+
+primary_contact:
+  name: "Prince Jain"
+  email: "princejain756@gmail.com"
+  phone: "+91-8005634678"
+
+team_members:
+  - name: "Prince Jain"
+    email: "princejain756@gmail.com"
+    role: "ML Engineer"
+
+# ============================================================================
+# Code and reproducibility
+# ============================================================================
+github_repo: "https://github.com/princejain756/Data-AiChallengeHack2skill"
+
+sandbox_link: "https://huggingface.co/spaces/princejain756/redrob-ranker"
+
+reproduce_command: "python rank.py --candidates ./candidates.jsonl --out ./submission.csv"
+
+# ============================================================================
+# Compute environment
+# ============================================================================
+compute:
+  platform: "MacBook Pro M2"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.11.4"
+  os: "macOS 14.2"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: false
+  pre_computation_time_minutes: 0
+
+# ============================================================================
+# AI tools declaration
+# ============================================================================
+ai_tools_used:
+  - "Claude"
+  - "GitHub Copilot"
+
+ai_usage_summary: |
+  I used Claude to bounce ideas off during development — mainly for debugging tricky
+  edge cases in the honeypot detection and sanity-checking my scoring weights.
+  Copilot handled autocomplete. The ranking script itself runs fully offline with
+  zero external API calls.
+
+# ============================================================================
+# Approach summary
+# ============================================================================
+methodology_summary: |
+  Offline ranker for the Senior AI Engineer role. First pass filters out honeypot
+  profiles by catching timeline contradictions and bogus skill claims. Second pass
+  scores candidates on YoE fit, title relevance, vector-DB/search/embedding skills,
+  and actual keyword evidence in their job descriptions. Third pass applies platform
+  signal multipliers (response rate, login recency, notice period, GitHub activity)
+  so inactive or unresponsive candidates drop down the list. Ties break on candidate ID.
+  Runs in about 9 seconds on a single CPU core for 100K profiles.
+
+# ============================================================================
+# Declarations
+# ============================================================================
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
