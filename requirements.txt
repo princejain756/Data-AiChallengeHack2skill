@@ -1,2 +1,2 @@
-# Only needed for PDF generation, not for ranking
-reportlab>=4.0
+reportlab
+pypdf

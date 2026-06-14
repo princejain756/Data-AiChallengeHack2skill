@@ -16,66 +16,90 @@ python rank.py --candidates ./candidates.jsonl --out prince_jain.csv
 python validate_submission.py prince_jain.csv
 ```
 
-That's it. Takes about 9 seconds on an M2 MacBook, no GPU, no network calls.
+Takes about 10 seconds on an M2 MacBook, no GPU, no network calls.
 
 ---
 
 ## How it works
 
-Three stages, all offline, all CPU.
+Four signal groups, all offline, all CPU.
 
 ### 1. Honeypot filtering
 
-The dataset has ~80 synthetic profiles with impossible data baked in. We catch them by checking:
+The dataset has ~42 synthetic profiles with impossible data. We catch them by checking:
 - Job durations that exceed the calendar gap between start and end dates
 - Single jobs longer than the candidate's total stated experience
 - Skills marked "expert" with 0 months of recorded usage (3+ of these trips the filter)
 
-Any candidate that trips one of these checks gets dropped before scoring.
+Any candidate that trips one of these gets dropped before scoring.
 
-### 2. Relevance scoring
+### 2. Technical fit scoring (strongest signal)
 
-We score what actually matters for this role:
+Three sub-signals, each contributing independently:
 
-| Signal | Weight | What we look at |
-|---|---|---|
-| Technical skills | 30% | Pinecone, Milvus, Qdrant, FAISS, embeddings, NDCG/MRR, fine-tuning (LoRA/PEFT) |
-| Title match | 25% | Senior/Lead AI/ML/NLP roles get max score. Marketing, HR, Sales → filtered out. |
-| Career keywords | 25% | Actual mentions of search, retrieval, vector, ranking work in job descriptions |
-| YoE fit | 20% | 5–9 years is the sweet spot. Below 4 or above 12 gets penalized. |
+**Self-reported skills** - We group the candidate's skill list into core (vector DBs, embeddings, semantic search), strong (fine-tuning, LoRA, eval metrics, retrieval), and support (Python, PyTorch, NLP). Proficiency and duration both factor in, with diminishing returns past 24 months. Candidates who cover multiple categories get a combination bonus because the JD asks for the intersection, not just one area.
 
-Consulting-only backgrounds (TCS, Infosys, Wipro across every role) get heavily down-weighted. Non-India candidates who won't relocate are dropped.
+**Verified assessments from Redrob** - The platform's own `skill_assessment_scores` field. These are actual test results, not self-reported. Categories like Information Retrieval, Vector Search, Learning to Rank, Embeddings, and Semantic Search map directly to the JD. A candidate with a 90/100 in Information Retrieval is weighted much more heavily than someone who just listed "information retrieval" as a skill. 94 of our top 100 have verified assessments.
 
-### 3. Behavioral modifiers
+**Career history keywords (recency-weighted)** - We scan job descriptions and titles for relevant terms (embedding, vector, retrieval, ranking, etc.), but weight the current job at 1.0x, one job back at 0.65x, two back at 0.35x. Someone doing vector DB work right now matters more than someone who did it three jobs ago.
 
-The raw score gets multiplied by platform signals:
+### 3. Role fit scoring
+
+| Signal | What we look at |
+|---|---|
+| YoE fit | 5-9 years = full, 4 or 10-12 = partial, outside = minimal |
+| Title match | Recommendation Systems Engineer, Search Engineer, Senior AI/ML/NLP roles score highest |
+| Company/industry | Product companies and AI/ML startups get a boost. Pure IT Services backgrounds get penalized. |
+| Location | Pune/Noida preferred. Tier-1 Indian cities next. Non-India without willingness to relocate filtered out. |
+
+### 4. Availability and engagement (multiplier)
+
+The raw score gets scaled by platform signals:
 - **Recruiter response rate**: candidates who don't reply get scaled down
-- **Login recency**: inactive accounts (180+ days) take a hit
+- **Login recency**: inactive accounts (180+ days) take a big hit. Active in last 14 days gets a small boost.
 - **Notice period**: under 30 days gets a bump, over 90 gets penalized
-- **GitHub activity**: verified contributions add a small boost
-- **Open to work flag**: off means 0.85x multiplier
+- **GitHub activity**: score above 70 gets a 15% boost
+- **Interview completion rate**: shows follow-through on hiring processes
+- **Open to work flag**: off means 0.8x multiplier
 
-Ties are broken by candidate_id ascending.
+### 5. Tiebreakers
+
+Small additive bonuses for:
+- Education tier (tier_1 institutions get +0.15)
+- Saved by recruiters in last 30 days (market demand signal)
+- Profile views received (visibility on platform)
+- Relevant certifications (ML, Deep Learning, Cloud specializations)
+- Profile completeness score
+
+## Output quality
+
+| Metric | Value |
+|---|---|
+| Honeypots in top 100 | 0 |
+| Average YoE in top 100 | 6.3 years |
+| Candidates with verified assessments | 94/100 |
+| Top industries | AI/ML (23), Fintech (14), Internet (9) |
+| Score monotonic decreasing | Yes |
+| Runtime (100K candidates) | ~10 seconds |
 
 ## Reasoning
 
-Each candidate gets a 1-2 sentence explanation pulled from their actual profile data: title, company, YoE, matched skills, and signal values. We rotate between six sentence structures so the output doesn't look templated. Every claim maps back to something in the candidate's JSON.
+Each candidate gets a 1-2 sentence explanation pulled from their actual profile data: name, title, company, YoE, matched skills, assessment scores, and signal values. Six sentence templates rotate to keep things varied. Every claim maps directly to a field in the candidate's JSON. No language model is called, so there's nothing made up.
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | `rank.py` | Ranking script. Single entry point. |
-| `validate_submission.py` | Format checker from the hackathon bundle |
 | `prince_jain.csv` | Final ranked output (100 candidates) |
 | `submission_metadata.yaml` | Team info and methodology summary |
-| `generate_pdf.py` | Builds the approach deck PDF |
-| `approach_deck.pdf` | 10-slide methodology document |
+| `generate_pdf.py` | Builds the approach deck PDF from the official template |
+| `approach_deck.pdf` | Methodology document on Redrob template |
 
 ## Requirements
 
-Python 3.9+ with standard library only for ranking. `reportlab` needed only for PDF generation.
+Python 3.9+ with standard library only for ranking. `reportlab` and `pypdf` needed only for PDF generation.
 
 ```
-pip install reportlab
+pip install reportlab pypdf
 ```
