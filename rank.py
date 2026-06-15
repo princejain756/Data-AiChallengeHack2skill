@@ -133,6 +133,15 @@ def calculate_score(candidate):
     if country != "india" and not willing_to_relocate:
         return 0.0
 
+    # JD: deprioritize CV/speech/robotics without NLP/IR exposure (line 49)
+    cv_speech_titles = ["computer vision", "robotics", "speech", "image processing",
+                        "autonomous", "perception"]
+    nlp_ir_keywords = ["nlp", "search", "retrieval", "ranking", "recommendation",
+                       "embedding", "vector", "language model", "text"]
+    is_cv_speech = any(kw in current_title or kw in headline for kw in cv_speech_titles)
+    has_nlp_ir = any(kw in current_title or kw in headline for kw in nlp_ir_keywords)
+    cv_penalty = 0.3 if (is_cv_speech and not has_nlp_ir) else 1.0
+
     # ========== A. TECHNICAL FIT (max ~4.5) ==========
 
     # A1. Self-reported skills (proficiency x duration, grouped by category)
@@ -143,8 +152,11 @@ def calculate_score(candidate):
         sname = s.get("name", "").lower()
         prof = s.get("proficiency", "beginner")
         duration = s.get("duration_months", 0)
+        endorsements = s.get("endorsements", 0)
         pw = prof_weights.get(prof, 0.3)
-        depth = pw * min(duration / 24.0, 2.0)  # cap at 2 years for diminishing returns
+        # Endorsements boost credibility of self-reported skills
+        endorse_boost = 1.0 + min(endorsements, 20) * 0.01
+        depth = pw * min(duration / 24.0, 2.0) * endorse_boost
 
         for kw in CORE_SKILLS:
             if kw in sname:
@@ -478,14 +490,31 @@ def calculate_score(candidate):
             tiebreak -= 0.05  # regressed
 
     # D6. Job stability (founding team wants committed people)
-    if len(career_history) >= 4:
+    # JD line 46: "switching companies every 1.5 years" = disqualifier
+    if len(career_history) >= 3:
         avg_duration = sum(j.get("duration_months", 0) for j in career_history) / len(career_history)
-        if avg_duration < 12:
-            tiebreak -= 0.08  # job hopper penalty
+        if avg_duration < 18:
+            # Title-chaser check: did they get progressive titles from switching?
+            unique_companies = len(set(j.get("company", "").lower() for j in career_history))
+            if unique_companies >= len(career_history) - 1 and avg_duration < 15:
+                tiebreak -= 0.15  # classic title-chaser pattern
+            else:
+                tiebreak -= 0.06
         elif avg_duration >= 30:
             tiebreak += 0.06  # stable tenure bonus
 
-    final = (tech_score + role_fit) * engagement_mult + tiebreak
+    # D7. Endorsements received (network credibility)
+    total_endorsements = signals.get("endorsements_received", 0)
+    if total_endorsements >= 50:
+        tiebreak += 0.06
+    elif total_endorsements >= 20:
+        tiebreak += 0.03
+
+    # D8. Verified identity (platform commitment)
+    if signals.get("verified_email", False) and signals.get("verified_phone", False):
+        tiebreak += 0.03
+
+    final = (tech_score + role_fit) * engagement_mult * cv_penalty + tiebreak
     return round(final, 4)
 
 
