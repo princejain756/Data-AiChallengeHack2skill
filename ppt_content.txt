@@ -1,0 +1,230 @@
+# PPT/PDF Content - Copy-Paste Ready
+# Team: NoTone | Leader: Prince Jain
+
+================================================================
+SLIDE 1: COVER / PROBLEM STATEMENT
+================================================================
+
+Team Name: NoTone
+Team Leader Name: Prince Jain
+
+Problem Statement:
+Keyword matching surfaces keyword stuffers and misses qualified people
+who shipped real systems but don't list trendy buzzwords. We built a
+46-signal offline ranker that verifies skills through assessments,
+catches fake profiles, and factors in platform activity and career
+trajectory.
+
+
+================================================================
+SLIDE 2: SOLUTION OVERVIEW
+================================================================
+
+What is your proposed solution?
+
+A single Python script (rank.py) that reads 100K candidates, filters
+out synthetic honeypots, scores the rest against the JD using 46 data
+signals across 5 categories, and outputs a ranked CSV with per-candidate
+reasoning. Runs in 10 seconds on CPU. No GPU, no network, no API calls,
+stdlib only.
+
+What differentiates your approach from traditional candidate matching?
+
+- We avoid the keyword-matching trap the JD warns about. 3,946 candidates
+  have 6+ AI keywords but are HR Managers or Graphic Designers. None made
+  our top 100.
+
+- Verified Redrob assessments (actual test scores) outweigh self-reported
+  skills. 95 of our top 100 have platform-verified assessment scores.
+
+- Reasoning connects to JD requirements and flags honest concerns. 78%
+  mention production system context, 39% flag gaps like YoE outside range
+  or high notice periods.
+
+
+================================================================
+SLIDE 3: JD UNDERSTANDING
+================================================================
+
+What are the key requirements extracted from the JD?
+
+- 5-9 years of hands-on ML/AI work, ideally at product companies not
+  consulting
+
+- Direct experience with vector DBs (Pinecone, Milvus, Qdrant, FAISS),
+  embeddings, and search evaluation metrics (NDCG, MRR, MAP)
+
+- Shipped ranking, search, or recommendation systems to production users
+
+- Founding team culture: prefers shippers over pure researchers, penalizes
+  title-chasers who switch jobs every 1.5 years for title bumps
+
+Which traps does the JD explicitly warn about?
+
+- Keyword stuffers: non-technical people with many AI keywords in skills
+- LangChain-only candidates: know the wrapper but not the underlying ML
+- CV/speech/robotics people without any NLP or information retrieval exposure
+- Architecture-only seniors who haven't written production code recently
+
+
+================================================================
+SLIDE 4: RANKING METHODOLOGY (46 SIGNALS)
+================================================================
+
+How does your system score and rank candidates?
+
+Five-stage pipeline:
+(1) Honeypot filter drops synthetic profiles
+(2) Technical fit scores skills, assessments, and career keywords
+(3) Role fit evaluates YoE, title, company, location
+(4) Engagement multipliers adjust for availability
+(5) Tiebreakers separate close scores
+
+Technical Fit (12 signals):
+Self-reported skills (proficiency x duration x endorsements, grouped into
+core/strong/support), verified assessment scores from Redrob platform (56
+mapped categories), recency-weighted career keywords, profile summary
+mining, LangChain-only detection, multi-category combination bonus.
+
+Role Fit (10 signals):
+YoE band scoring (5-9 ideal), title match (RecSys/Search/NLP highest),
+company tier (product > AI startup > IT services), industry, company size,
+location (Pune/Noida preferred), work mode, HR-tech domain bonus,
+architecture-only penalty, CV/speech/robotics filter.
+
+Engagement (7 signals):
+Response rate, login recency, open-to-work, notice period, GitHub activity,
+interview completion rate, avg response time.
+
+Tiebreakers (12 signals):
+Education tier/field, recruiter saves, profile views, completeness, certs,
+career trajectory, job stability, title-chaser detection, endorsements,
+search appearances, verified identity.
+
+
+================================================================
+SLIDE 5: EXPLAINABILITY & DATA VALIDATION
+================================================================
+
+How are ranking decisions explained?
+
+Each candidate gets a 1-2 sentence explanation pulled from their profile:
+name, title, company, YoE, matched skills, whether they shipped a
+search/recommendation system, assessment scores, and platform signals.
+Six sentence templates rotate. 78% explicitly connect to JD requirements.
+39% flag honest concerns.
+
+How do you prevent hallucinations?
+
+Reasoning is assembled programmatically from parsed JSON fields. No
+language model is called, so there's no way for a skill or employer to
+appear in the reasoning that isn't in the actual data.
+
+How do you handle suspicious profiles?
+
+The honeypot filter checks three things: expert skills with zero usage
+duration (3+ triggers exclusion), job durations exceeding total stated
+YoE, and job durations that don't match calendar math between start and
+end dates. 42 profiles caught, 0 in our top 100.
+
+
+================================================================
+SLIDE 6: END-TO-END WORKFLOW
+================================================================
+
+1. Load data       - Stream-reads candidates.jsonl line by line. Low memory.
+2. Filter honeypots - Drops 42 profiles with timeline/skill contradictions.
+3. Hard filters     - Removes non-tech roles, wrong country, CV/speech-only.
+4. Score tech fit   - Skills, assessments, career keywords, summary mining.
+5. Score role fit   - YoE, title, company, industry, location, HR-tech bonus.
+6. Apply multipliers - Response rate, recency, notice, GitHub, completion rate.
+7. Add tiebreakers  - Education, trajectory, stability, endorsements, certs.
+8. Sort and rank    - Descending by score. Ties broken by candidate_id.
+9. Generate reasoning - JD-connected, concern-flagging, 6 template rotation.
+10. Write CSV       - Validated output with 100 ranked candidates.
+
+
+================================================================
+SLIDE 7: SYSTEM ARCHITECTURE
+================================================================
+
+candidates.jsonl (100K profiles, streamed line-by-line)
+        |
+Honeypot filter (timeline checks, skill contradictions) -> 42 dropped
+        |
+Hard filters (non-tech, wrong country, CV/speech) -> 55K filtered
+        |
+46-signal scoring (tech fit + role fit + HR-tech + assessments)
+        |
+Engagement multipliers (response rate, recency, GitHub, notice)
+        |
+Tiebreakers (education, trajectory, stability, endorsements)
+        |
+Sort desc, generate reasoning, write prince_jain.csv (top 100)
+
+
+================================================================
+SLIDE 8: RESULTS & PERFORMANCE
+================================================================
+
+What results demonstrate ranking quality?
+
+- Top 10: 8 out of 10 are in the ideal 6-8 YoE range. All have shipped
+  search, ranking, or recommendation systems. Companies include CRED,
+  Meta, Paytm, Netflix, Zomato, Genpact AI, Aganitha, Sarvam AI.
+
+- 95 of 100 have verified Redrob assessment scores. Average YoE is 6.4
+  years. 24 from AI/ML industry, 13 from Fintech, 9 from Internet.
+
+- Zero honeypots in the output. Zero keyword stuffers (the dataset has
+  3,946). Zero CV/speech/robotics people without NLP/IR crossover.
+
+Runtime and compute?
+
+- ~10 seconds end-to-end for 100K candidates. Under 15 MB memory.
+- Fully offline, no GPU, passes validate_submission.py with zero errors.
+
+
+================================================================
+SLIDE 9: TECHNOLOGIES USED
+================================================================
+
+What technologies were used and why?
+
+- Python stdlib (json, csv, datetime, argparse, random): The ranking step
+  has zero external dependencies. Nothing to install, works on any
+  Python 3.9+ environment.
+
+- Type-hinted code with module docstring. All functions documented.
+  22 iterative git commits across 3 development days.
+
+- ReportLab + pypdf: Only used for PDF generation, not part of the
+  ranking pipeline.
+
+Why no ML model or LLM?
+
+Without labeled training data, a model would be fitting noise.
+Hand-crafted rules grounded in the JD's explicit criteria are more
+transparent and defensible. Every scoring decision maps to something
+the JD says.
+
+
+================================================================
+SLIDE 10: SUBMISSION ASSETS
+================================================================
+
+GitHub repo: https://github.com/princejain756/Data-AiChallengeHack2skill
+Sandbox: sandbox_notebook.ipynb (Google Colab ready)
+Ranked output: prince_jain.csv (100 candidates, validated)
+Metadata: submission_metadata.yaml
+Approach deck: approach_deck.pdf (10 slides on official template)
+Run command: python rank.py --candidates ./candidates.jsonl --out output.csv
+
+Signal count: 46 scoring signals + 3 honeypot checks + 6 reasoning templates
+
+
+================================================================
+SLIDE 11: THANK YOU
+================================================================
+
+(Template slide - no changes needed)

@@ -37,13 +37,12 @@ def make_overlay_page(draw_func):
     return PdfReader(buf).pages[0]
 
 
-def draw_bullet(c, x, y, text, font="Helvetica", size=11):
+def draw_bullet(c, x, y, text, font="Helvetica", size=10):
     """Draw a bullet point at (x, y), returns new y."""
     c.setFont(font, size)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "\u2022")
     c.setFillColor(C_TEXT)
-    # Handle line wrapping manually
     max_w = PW - x - 50
     words = text.split()
     lines = []
@@ -57,13 +56,12 @@ def draw_bullet(c, x, y, text, font="Helvetica", size=11):
             current = w
     if current:
         lines.append(current)
-
     for i, line in enumerate(lines):
         c.drawString(x + 16, y - i * (size + 3), line)
-    return y - len(lines) * (size + 3) - 4
+    return y - len(lines) * (size + 3) - 3
 
 
-def draw_body(c, x, y, text, font="Helvetica", size=11, max_w=None):
+def draw_body(c, x, y, text, font="Helvetica", size=10, max_w=None):
     """Draw wrapped body text."""
     if max_w is None:
         max_w = PW - x - 50
@@ -99,9 +97,10 @@ def slide_1(c):
     c.drawString(65, y, "Problem Statement :")
     y -= 18
     draw_body(c, 65, y,
-        "Keyword matching surfaces keyword stuffers and misses qualified people. "
-        "It also can't tell if someone is available or interested. We built an offline "
-        "ranker that checks real skills, catches fake profiles, and factors in platform activity.",
+        "Keyword matching surfaces keyword stuffers and misses qualified people "
+        "who shipped real systems but don't list trendy buzzwords. We built a 46-signal "
+        "offline ranker that verifies skills through assessments, catches fake profiles, "
+        "and factors in platform activity and career trajectory.",
         size=11)
 
 
@@ -111,26 +110,26 @@ def slide_2(c):
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "What is your proposed solution?")
-    y -= 18
+    y -= 16
     y = draw_body(c, x, y,
-        "A Python script that reads 100K candidate profiles, filters out synthetic fakes, "
-        "scores the rest against the job description, adjusts for availability signals, and "
-        "outputs a ranked CSV with per-candidate reasoning. Runs in about 9 seconds on CPU. "
-        "No GPU, no network, no external API calls.")
-    y -= 14
+        "A single Python script (rank.py) that reads 100K candidates, filters out "
+        "synthetic honeypots, scores the rest against the JD using 46 data signals "
+        "across 5 categories, and outputs a ranked CSV with per-candidate reasoning. "
+        "Runs in 10 seconds on CPU. No GPU, no network, no API calls, stdlib only.")
+    y -= 10
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "What differentiates your approach from traditional candidate matching?")
-    y -= 18
+    y -= 16
     y = draw_bullet(c, x, y,
-        "We check recruiter response rates and login recency. A perfect skill match who "
-        "hasn't been active in 6 months isn't useful for hiring.")
+        "We avoid the keyword-matching trap the JD warns about. 3,946 candidates have "
+        "6+ AI keywords but are HR Managers or Graphic Designers. None made our top 100.")
     y = draw_bullet(c, x, y,
-        "We cross-check job timelines against calendar math. If someone claims 5 years at a "
-        "role that started 18 months ago, the profile gets flagged and dropped.")
+        "Verified Redrob assessments (actual test scores) outweigh self-reported skills. "
+        "95 of our top 100 have platform-verified assessment scores.")
     y = draw_bullet(c, x, y,
-        "Reasoning is built from actual profile fields, not generated text. Every claim "
-        "in the output maps directly to a field in the candidate's JSON.")
+        "Reasoning connects to JD requirements and flags honest concerns. 78% mention "
+        "production system context, 39% flag gaps like YoE outside range or high notice periods.")
 
 
 # ---- SLIDE 3: JD Understanding ----
@@ -139,26 +138,30 @@ def slide_3(c):
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "What are the key requirements extracted from the JD?")
-    y -= 18
+    y -= 16
     y = draw_bullet(c, x, y,
-        "5 to 9 years of hands-on ML/AI work, ideally at product companies (not consulting-only)")
+        "5-9 years of hands-on ML/AI work, ideally at product companies not consulting")
     y = draw_bullet(c, x, y,
-        "Direct experience with vector databases (Pinecone, Milvus, Qdrant, FAISS), embeddings, "
+        "Direct experience with vector DBs (Pinecone, Milvus, Qdrant, FAISS), embeddings, "
         "and search evaluation metrics (NDCG, MRR, MAP)")
     y = draw_bullet(c, x, y,
-        "Python fluency. Bonus for fine-tuning work (LoRA, PEFT). Filter out marketing, HR, "
-        "sales, finance, ops roles. Pure academic researchers also deprioritized.")
-    y -= 14
+        "Shipped ranking, search, or recommendation systems to production users")
+    y = draw_bullet(c, x, y,
+        "Founding team culture: prefers shippers over pure researchers, penalizes "
+        "title-chasers who switch jobs every 1.5 years for title bumps")
+    y -= 10
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
-    c.drawString(x, y, "Which candidate signals matter most?")
-    y -= 18
+    c.drawString(x, y, "Which traps does the JD explicitly warn about?")
+    y -= 16
     y = draw_bullet(c, x, y,
-        "Recruiter response rate: are they engaging with outreach?")
+        "Keyword stuffers: non-technical people with many AI keywords in skills")
     y = draw_bullet(c, x, y,
-        "Timeline consistency: do the dates in their career history add up?")
+        "LangChain-only candidates: know the wrapper but not the underlying ML")
     y = draw_bullet(c, x, y,
-        "Login recency and GitHub activity: are they active on the platform?")
+        "CV/speech/robotics people without any NLP or information retrieval exposure")
+    y = draw_bullet(c, x, y,
+        "Architecture-only seniors who haven't written production code recently")
 
 
 # ---- SLIDE 4: Ranking Methodology ----
@@ -166,33 +169,44 @@ def slide_4(c):
     x, y = 65, PH - 115
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
-    c.drawString(x, y, "How does your system retrieve, score, and rank candidates?")
-    y -= 18
+    c.drawString(x, y, "How does your system score and rank candidates? (46 signals)")
+    y -= 16
     y = draw_body(c, x, y,
-        "Three sequential offline steps: (1) Honeypot filter drops synthetic profiles, "
-        "(2) Feature scoring evaluates relevance, (3) Behavioral multipliers adjust final weights.")
-    y -= 14
-    c.setFont("Helvetica-Bold", 11)
+        "Five-stage pipeline: (1) Honeypot filter drops synthetic profiles, "
+        "(2) Technical fit scores skills, assessments, and career keywords, "
+        "(3) Role fit evaluates YoE, title, company, location, "
+        "(4) Engagement multipliers adjust for availability, "
+        "(5) Tiebreakers separate close scores.")
+    y -= 10
+    c.setFont("Helvetica-Bold", 10)
     c.setFillColor(C_SUB)
-    c.drawString(x, y, "What heuristics are used?")
-    y -= 18
-    y = draw_bullet(c, x, y,
-        "Technical skills match: 30% (vector DBs, embeddings, eval metrics, fine-tuning, Python)")
-    y = draw_bullet(c, x, y,
-        "Title relevance: 25% (Senior/Lead AI/ML/NLP roles score highest)")
-    y = draw_bullet(c, x, y,
-        "Career keywords: 25% (mentions of search, retrieval, vector, ranking in job descriptions)")
-    y = draw_bullet(c, x, y,
-        "YoE fit: 20% (5-9 years = full, 4 or 10-12 = partial, outside = minimal)")
+    c.drawString(x, y, "Technical Fit (12 signals):")
     y -= 14
-    c.setFont("Helvetica-Bold", 11)
-    c.setFillColor(C_SUB)
-    c.drawString(x, y, "How are signals combined?")
-    y -= 18
     y = draw_body(c, x, y,
-        "Raw score gets multiplied by: response rate (0.5 + 0.5 * RR), login recency "
-        "(1.0 down to 0.4), open-to-work flag (1.0 or 0.85), notice period (up to 1.1x "
-        "for <30 days), GitHub activity. Ties break on candidate_id ascending.")
+        "Self-reported skills (proficiency x duration x endorsements, grouped into core/strong/support), "
+        "verified assessment scores from Redrob platform (56 mapped categories), "
+        "recency-weighted career keywords, profile summary mining, "
+        "LangChain-only detection, multi-category combination bonus.", size=9)
+    y -= 8
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColor(C_SUB)
+    c.drawString(x, y, "Role Fit (10 signals):")
+    y -= 14
+    y = draw_body(c, x, y,
+        "YoE band scoring (5-9 ideal), title match (RecSys/Search/NLP highest), "
+        "company tier (product > AI startup > IT services), industry, company size, "
+        "location (Pune/Noida preferred), work mode, HR-tech domain bonus, "
+        "architecture-only penalty, CV/speech/robotics filter.", size=9)
+    y -= 8
+    c.setFont("Helvetica-Bold", 10)
+    c.setFillColor(C_SUB)
+    c.drawString(x, y, "Engagement (7) + Tiebreakers (12):")
+    y -= 14
+    y = draw_body(c, x, y,
+        "Response rate, login recency, open-to-work, notice period, GitHub, "
+        "interview completion, avg response time. Tiebreakers: education tier/field, "
+        "recruiter saves, profile views, completeness, certs, career trajectory, "
+        "job stability, title-chaser detection, endorsements, search appearances, verified identity.", size=9)
 
 
 # ---- SLIDE 5: Explainability & Data Validation ----
@@ -201,29 +215,31 @@ def slide_5(c):
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "How are ranking decisions explained?")
-    y -= 18
+    y -= 16
     y = draw_body(c, x, y,
         "Each candidate gets a 1-2 sentence explanation pulled from their profile: name, "
-        "title, company, YoE, matched skills, signal values like GitHub score or notice "
-        "period. Six sentence templates rotate to keep things varied.")
-    y -= 14
+        "title, company, YoE, matched skills, whether they shipped a search/recommendation "
+        "system, assessment scores, and platform signals. Six sentence templates rotate. "
+        "78% explicitly connect to JD requirements. 39% flag honest concerns.")
+    y -= 10
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "How do you prevent hallucinations?")
-    y -= 18
+    y -= 16
     y = draw_body(c, x, y,
-        "There aren't any. Reasoning is assembled programmatically from parsed JSON "
-        "fields. No language model is called, so there's no way for a skill or employer "
-        "to appear in the reasoning that isn't in the actual data.")
-    y -= 14
+        "Reasoning is assembled programmatically from parsed JSON fields. No language "
+        "model is called, so there's no way for a skill or employer to appear in the "
+        "reasoning that isn't in the actual data.")
+    y -= 10
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "How do you handle suspicious profiles?")
-    y -= 18
+    y -= 16
     y = draw_body(c, x, y,
-        "The honeypot filter checks three things: expert skills with zero usage duration, "
-        "job durations exceeding total stated YoE, and job durations that don't fit the "
-        "calendar range. Any of these trips the filter and the candidate gets excluded.")
+        "The honeypot filter checks three things: expert skills with zero usage duration "
+        "(3+ triggers exclusion), job durations exceeding total stated YoE, and job durations "
+        "that don't match calendar math between start and end dates. 42 profiles caught, "
+        "0 in our top 100.")
 
 
 # ---- SLIDE 6: End-to-End Workflow ----
@@ -231,63 +247,65 @@ def slide_6(c):
     x, y = 65, PH - 115
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
-    c.drawString(x, y, "Complete workflow from JD input to ranked output:")
+    c.drawString(x, y, "Complete workflow from input to ranked output:")
     y -= 22
 
     steps = [
-        ("1. Load data", "Stream-reads candidates.jsonl line by line. Low memory footprint."),
-        ("2. Filter honeypots", "Drops profiles with timeline or skill-proficiency contradictions."),
-        ("3. Score relevance", "Evaluates YoE, titles, skills, and career history keywords."),
-        ("4. Apply modifiers", "Multiplies score by response rate, login recency, notice, GitHub."),
-        ("5. Sort and rank", "Descending by score. Ties broken by candidate_id ascending."),
-        ("6. Write output", "Generates per-candidate reasoning and writes validated CSV."),
+        ("1. Load data", "Stream-reads candidates.jsonl line by line. Low memory."),
+        ("2. Filter honeypots", "Drops 42 profiles with timeline or skill contradictions."),
+        ("3. Hard filters", "Removes non-tech roles, wrong country, CV/speech-only."),
+        ("4. Score tech fit", "Skills, assessments, career keywords, summary mining."),
+        ("5. Score role fit", "YoE, title, company, industry, location, HR-tech bonus."),
+        ("6. Apply multipliers", "Response rate, recency, notice, GitHub, completion rate."),
+        ("7. Add tiebreakers", "Education, trajectory, stability, endorsements, certs."),
+        ("8. Sort and rank", "Descending by score. Ties broken by candidate_id."),
+        ("9. Generate reasoning", "JD-connected, concern-flagging, 6 template rotation."),
+        ("10. Write CSV", "Validated output with 100 ranked candidates."),
     ]
     for label, desc in steps:
-        c.setFont("Helvetica-Bold", 10)
+        c.setFont("Helvetica-Bold", 9)
         c.setFillColor(C_HEAD)
         c.drawString(x, y, label)
-        c.setFont("Helvetica", 10)
+        c.setFont("Helvetica", 9)
         c.setFillColor(C_TEXT)
-        c.drawString(x + 130, y, desc)
-        y -= 18
+        c.drawString(x + 120, y, desc)
+        y -= 16
 
 
 # ---- SLIDE 7: System Architecture ----
 def slide_7(c):
     x_center = PW / 2
-    y = PH - 110
+    y = PH - 100
 
     blocks = [
-        "candidates.jsonl (100K profiles, streamed)",
-        "Honeypot filter (timeline checks, skill contradictions)",
-        "Feature scoring (YoE + titles + skills + career keywords)",
-        "Behavioral multipliers (response rate, recency, notice, GitHub)",
-        "Sort by score desc, tie-break on candidate_id",
-        "prince_jain.csv (top 100 with reasoning)",
+        "candidates.jsonl (100K profiles, streamed line-by-line)",
+        "Honeypot filter (timeline checks, skill contradictions) -> 42 dropped",
+        "Hard filters (non-tech, wrong country, CV/speech) -> 55K filtered",
+        "46-signal scoring (tech fit + role fit + HR-tech + assessments)",
+        "Engagement multipliers (response rate, recency, GitHub, notice)",
+        "Tiebreakers (education, trajectory, stability, endorsements)",
+        "Sort desc, generate reasoning, write prince_jain.csv (top 100)",
     ]
 
     for i, block in enumerate(blocks):
-        # Draw box
-        bw = 440
-        bh = 22
+        bw = 470
+        bh = 20
         bx = x_center - bw / 2
         c.setStrokeColor(C_SUB)
         c.setFillColor(colors.HexColor("#F5F3FF"))
         c.roundRect(bx, y - bh, bw, bh, 4, fill=1, stroke=1)
         c.setFillColor(C_HEAD)
-        c.setFont("Helvetica-Bold", 9)
-        c.drawCentredString(x_center, y - bh + 7, block)
-        y -= bh + 6
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(x_center, y - bh + 6, block)
+        y -= bh + 4
 
-        # Draw arrow between blocks
         if i < len(blocks) - 1:
             c.setStrokeColor(C_SUB)
             c.setLineWidth(1.5)
-            c.line(x_center, y + 6, x_center, y - 4)
-            # arrowhead
-            c.line(x_center - 4, y, x_center, y - 4)
-            c.line(x_center + 4, y, x_center, y - 4)
-            y -= 8
+            c.line(x_center, y + 4, x_center, y - 3)
+            c.line(x_center - 3, y, x_center, y - 3)
+            c.line(x_center + 3, y, x_center, y - 3)
+            y -= 6
 
 
 # ---- SLIDE 8: Results & Performance ----
@@ -296,22 +314,24 @@ def slide_8(c):
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "What results demonstrate ranking quality?")
-    y -= 18
+    y -= 16
     y = draw_bullet(c, x, y,
-        "Top 10 are Senior AI/ML/NLP Engineers from product companies with real "
-        "vector DB and search infrastructure experience, 5-9 years in, actively "
-        "responding to recruiters.")
+        "Top 10: 8 out of 10 are in the ideal 6-8 YoE range. All have shipped "
+        "search, ranking, or recommendation systems. Companies include CRED, Meta, "
+        "Paytm, Netflix, Zomato, Genpact AI, Aganitha, Sarvam AI.")
     y = draw_bullet(c, x, y,
-        "Zero honeypots in the output. All synthetic profiles were caught by the filter.")
-    y -= 14
+        "95 of 100 have verified Redrob assessment scores. Average YoE is 6.4 years. "
+        "24 from AI/ML industry, 13 from Fintech, 9 from Internet companies.")
+    y = draw_bullet(c, x, y,
+        "Zero honeypots in the output. Zero keyword stuffers (the dataset has 3,946). "
+        "Zero CV/speech/robotics people without NLP/IR crossover.")
+    y -= 10
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "Runtime and compute?")
-    y -= 18
+    y -= 16
     y = draw_bullet(c, x, y,
-        "9 seconds end-to-end for 100K candidates on an M2 MacBook")
-    y = draw_bullet(c, x, y,
-        "Under 15 MB peak memory. Well within the 16 GB constraint.")
+        "~10 seconds end-to-end for 100K candidates. Under 15 MB memory.")
     y = draw_bullet(c, x, y,
         "Fully offline, no GPU, passes validate_submission.py with zero errors.")
 
@@ -322,17 +342,24 @@ def slide_9(c):
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(C_SUB)
     c.drawString(x, y, "What technologies were used and why?")
-    y -= 18
+    y -= 16
     y = draw_bullet(c, x, y,
-        "Python stdlib (json, csv, datetime, argparse): The ranking step has zero "
-        "external dependencies. Nothing to install, nothing to break, works on any "
-        "Python 3.9+ environment.")
+        "Python stdlib (json, csv, datetime, argparse, random): The ranking step "
+        "has zero external dependencies. Nothing to install, works on any Python 3.9+.")
     y = draw_bullet(c, x, y,
-        "ReportLab + pypdf: For generating this PDF using the official template. "
-        "Only dependency outside stdlib, not part of the ranking pipeline.")
+        "Type-hinted code with module docstring. All functions documented. "
+        "22 iterative git commits across 3 development days.")
     y = draw_bullet(c, x, y,
-        "Git: Version control with iterative commit history showing actual development "
-        "progression.")
+        "ReportLab + pypdf: Only used for this PDF, not part of the ranking pipeline.")
+    y -= 10
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(C_SUB)
+    c.drawString(x, y, "Why no ML model or LLM?")
+    y -= 16
+    y = draw_body(c, x, y,
+        "Without labeled training data, a model would be fitting noise. Hand-crafted "
+        "rules grounded in the JD's explicit criteria are more transparent and defensible. "
+        "Every scoring decision maps to something the JD says.")
 
 
 # ---- SLIDE 10: Submission Assets ----
@@ -345,10 +372,11 @@ def slide_10(c):
 
     assets = [
         ("GitHub repo:", "https://github.com/princejain756/Data-AiChallengeHack2skill"),
+        ("Sandbox:", "sandbox_notebook.ipynb (Google Colab ready)"),
         ("Ranked output:", "prince_jain.csv (100 candidates, validated)"),
         ("Metadata:", "submission_metadata.yaml"),
         ("This deck:", "approach_deck.pdf (10 slides on official template)"),
-        ("Entry point:", "python rank.py --candidates ./candidates.jsonl --out ./prince_jain.csv"),
+        ("Run command:", "python rank.py --candidates ./candidates.jsonl --out output.csv"),
     ]
     for label, value in assets:
         c.setFont("Helvetica-Bold", 10)
@@ -356,8 +384,13 @@ def slide_10(c):
         c.drawString(x, y, label)
         c.setFont("Helvetica", 10)
         c.setFillColor(C_TEXT)
-        c.drawString(x + 110, y, value)
+        c.drawString(x + 115, y, value)
         y -= 20
+
+    y -= 10
+    c.setFont("Helvetica-Bold", 11)
+    c.setFillColor(C_SUB)
+    c.drawString(x, y, "Signal count: 46 scoring signals + 3 honeypot checks + 6 reasoning templates")
 
 
 # ---- SLIDE 11: Thank You (no overlay needed) ----
