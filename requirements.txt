@@ -1,2 +1,2 @@
-reportlab
-pypdf
+# No external dependencies needed for ranking.
+# rank.py uses Python 3.9+ standard library only.

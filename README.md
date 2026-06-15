@@ -1,5 +1,7 @@
 # Redrob AI Candidate Ranking
 
+**Team NoTone** - Prince Jain
+
 Offline ranking system that picks the top 100 candidates for a **Senior AI Engineer, Founding Team** role from 100K profiles.
 
 ## How to run it
@@ -37,7 +39,7 @@ Any candidate that trips one of these gets dropped before scoring.
 
 Five sub-signals, each contributing independently:
 
-**Self-reported skills** - We group the candidate's skill list into core (vector DBs, embeddings, semantic search), strong (fine-tuning, LoRA, eval metrics, retrieval), and support (Python, PyTorch, NLP). Proficiency, duration, and endorsement count all factor in, with diminishing returns past 24 months. Candidates who cover multiple categories get a combination bonus because the JD asks for the intersection, not just one area.
+**Self-reported skills** - We group the candidate's skill list into core (vector DBs, embeddings, semantic search), strong (fine-tuning, LoRA, eval metrics, retrieval), and support (Python, PyTorch, NLP). Proficiency, duration, and endorsement count all factor in, with diminishing returns past 24 months. Candidates who cover multiple categories get a combination bonus because the JD asks for the intersection of these areas.
 
 **Verified assessments from Redrob** - The platform's own `skill_assessment_scores` field. These are actual test results, not self-reported. Categories like Information Retrieval, Vector Search, Learning to Rank, Embeddings, and Semantic Search map directly to the JD. A candidate with a 90/100 in Information Retrieval is weighted much more heavily than someone who just listed "information retrieval" as a skill. 94 of our top 100 have verified assessments.
 
@@ -106,8 +108,7 @@ Each candidate gets a 1-2 sentence explanation pulled from their actual profile 
 | `prince_jain.csv` | Final ranked output (100 candidates) |
 | `submission_metadata.yaml` | Team info and methodology summary |
 | `sandbox_notebook.ipynb` | Google Colab notebook (mandatory sandbox) |
-| `generate_pdf.py` | Builds the approach deck PDF from the official template |
-| `approach_deck.pdf` | Methodology document on Redrob template |
+| `approach_deck.pptx` | Methodology document on Redrob template |
 
 ## Sandbox
 
@@ -115,8 +116,4 @@ Open the [sandbox notebook](sandbox_notebook.ipynb) in Google Colab. It clones t
 
 ## Requirements
 
-Python 3.9+ with standard library only for ranking. `reportlab` and `pypdf` needed only for PDF generation.
-
-```
-pip install reportlab pypdf
-```
+Python 3.9+ with standard library only. No external dependencies needed.
