@@ -228,8 +228,29 @@ def calculate_score(candidate):
 
     career_score = min(career_score, 2.5)
 
+    # A4. Profile summary keyword mining
+    summary = profile.get("summary", "").lower()
+    summary_keywords = ["retrieval", "vector", "embedding", "search", "ranking",
+                        "recommendation", "ndcg", "rerank", "semantic", "faiss",
+                        "pinecone", "qdrant", "weaviate", "milvus"]
+    summary_hits = sum(1 for kw in summary_keywords if kw in summary)
+    summary_score = min(summary_hits * 0.12, 0.6)
+
+    # A5. LangChain-only deprioritization (JD explicitly says to avoid these)
+    skill_names_lower = [s.get("name", "").lower() for s in skills]
+    all_skill_text = " ".join(skill_names_lower)
+    has_langchain = "langchain" in all_skill_text or "llamaindex" in all_skill_text
+    has_deeper_ml = any(kw in all_skill_text for kw in
+                        ["pytorch", "tensorflow", "faiss", "pinecone", "fine-tuning",
+                         "embeddings", "qdrant", "milvus", "weaviate", "sentence-transformers",
+                         "ndcg", "mrr"])
+    langchain_penalty = 1.0
+    if has_langchain and not has_deeper_ml:
+        langchain_penalty = 0.4  # heavy penalty for framework-only profiles
+
     # Combine technical fit
-    tech_score = min(self_skill_score, 2.5) + min(assess_val, 3.0) + career_score
+    tech_score = (min(self_skill_score, 2.5) + min(assess_val, 3.0) +
+                  career_score + summary_score) * langchain_penalty
 
     # ========== B. ROLE FIT (max ~2.5) ==========
 
@@ -367,7 +388,19 @@ def calculate_score(candidate):
     icr = signals.get("interview_completion_rate", 0.5)
     icr_mult = 0.7 + 0.3 * icr
 
-    engagement_mult = rr_mult * active_mult * otw_mult * notice_mult * gh_mult * icr_mult
+    # C7. Average response time (faster = more engaged)
+    resp_time = signals.get("avg_response_time_hours", 150)
+    if resp_time <= 24:
+        resp_mult = 1.1
+    elif resp_time <= 72:
+        resp_mult = 1.05
+    elif resp_time <= 150:
+        resp_mult = 1.0
+    else:
+        resp_mult = 0.9
+
+    engagement_mult = (rr_mult * active_mult * otw_mult * notice_mult *
+                       gh_mult * icr_mult * resp_mult)
 
     # ========== D. TIEBREAKERS (additive bonus 0 - 0.5) ==========
 
@@ -417,7 +450,41 @@ def calculate_score(candidate):
     elif cert_hits >= 1:
         tiebreak += 0.04
 
-    # ========== FINAL SCORE ==========
+    # D5. Career trajectory analysis
+    ml_title_keywords = ["ai", "ml", "machine learning", "nlp", "search",
+                         "retrieval", "data scientist", "recommendation"]
+    seniority_levels = {"intern": 0, "junior": 1, "associate": 2, "": 3,
+                        "mid": 3, "senior": 4, "lead": 5, "staff": 6,
+                        "principal": 7, "director": 8, "vp": 9}
+
+    trajectory_scores = []
+    for job in sorted_jobs:
+        jtitle = job.get("title", "").lower()
+        is_ml = any(kw in jtitle for kw in ml_title_keywords)
+        if not is_ml:
+            continue
+        lvl = 3  # default mid
+        for prefix, val in seniority_levels.items():
+            if prefix and prefix in jtitle:
+                lvl = val
+                break
+        trajectory_scores.append(lvl)
+
+    if len(trajectory_scores) >= 2:
+        # Check if career shows upward progression
+        if trajectory_scores[0] > trajectory_scores[-1]:
+            tiebreak += 0.12  # progressed upward
+        elif trajectory_scores[0] < trajectory_scores[-1]:
+            tiebreak -= 0.05  # regressed
+
+    # D6. Job stability (founding team wants committed people)
+    if len(career_history) >= 4:
+        avg_duration = sum(j.get("duration_months", 0) for j in career_history) / len(career_history)
+        if avg_duration < 12:
+            tiebreak -= 0.08  # job hopper penalty
+        elif avg_duration >= 30:
+            tiebreak += 0.06  # stable tenure bonus
+
     final = (tech_score + role_fit) * engagement_mult + tiebreak
     return round(final, 4)
 
