@@ -1,23 +1,38 @@
+"""
+rank.py - Candidate ranking engine for Senior AI Engineer (Search & Retrieval)
+
+Reads a candidates.jsonl file, scores each candidate against the job description
+using 46 data signals across 5 categories (technical fit, role fit, engagement,
+honeypot detection, tiebreakers), and outputs the top 100 as a ranked CSV.
+
+No external APIs, no ML models, no GPU required.
+Runs in ~10 seconds on 100K candidates using standard library only.
+
+Team: NoTone | Leader: Prince Jain
+"""
+
 import json
 import argparse
 import csv
-import sys
-import os
 import random
 from datetime import datetime
+from typing import Optional
 
 # Reference date for calendar calculations
 CURRENT_DATE = datetime(2026, 6, 15)
 
-def parse_date(date_str):
+
+def parse_date(date_str: Optional[str]) -> Optional[datetime]:
+    """Parse a YYYY-MM-DD string, returning None on failure."""
     if not date_str:
         return None
     try:
         return datetime.strptime(date_str, "%Y-%m-%d")
-    except Exception:
+    except (ValueError, TypeError):
         return None
 
-def is_honeypot(candidate):
+
+def is_honeypot(candidate: dict) -> bool:
     """
     Identifies synthetically anomalous profiles based on:
     1. Skills proficiency contradictions (expert with 0 duration).
@@ -99,7 +114,7 @@ NON_TECH = ["marketing", "hr ", "human resources", "recruiter", "sales",
             "business development", "content writer", "copywriter", "graphic design"]
 
 
-def calculate_score(candidate):
+def calculate_score(candidate: dict) -> float:
     """
     Multi-signal scoring for Senior AI Engineer (Founding Team) at Redrob.
 
@@ -556,7 +571,7 @@ def calculate_score(candidate):
     return round(final, 4)
 
 
-def generate_reasoning(candidate):
+def generate_reasoning(candidate: dict) -> str:
     """
     Builds a short reasoning string from the candidate's actual data.
     Rotates through six structures to avoid looking templated.
@@ -685,7 +700,7 @@ def generate_reasoning(candidate):
     return text
 
 
-def rank_candidates(candidates_file, output_file):
+def rank_candidates(candidates_file: str, output_file: str) -> None:
     print(f"Loading candidates from {candidates_file}...")
     candidates = []
     honeypots = 0
