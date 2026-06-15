@@ -560,15 +560,18 @@ def generate_reasoning(candidate):
     """
     Builds a short reasoning string from the candidate's actual data.
     Rotates through six structures to avoid looking templated.
+    Connects claims to JD requirements and includes honest concerns.
     """
     profile = candidate.get("profile", {})
     skills = candidate.get("skills", [])
     signals = candidate.get("redrob_signals", {})
+    career = candidate.get("career_history", [])
 
     name = profile.get("anonymized_name", "This candidate")
     yoe = profile.get("years_of_experience", 0)
     title = profile.get("current_title", "Engineer")
     company = profile.get("current_company", "their current company")
+    industry = profile.get("current_industry", "")
 
     # Matched technical skills
     tech_kw = ["pinecone", "weaviate", "qdrant", "milvus", "faiss",
@@ -583,6 +586,19 @@ def generate_reasoning(candidate):
                 matched.append(kw)
     skills_str = ", ".join(matched[:3]) if matched else "general ML engineering"
 
+    # JD connection: did they ship search/ranking/recommendation systems?
+    shipped_what = ""
+    for j in career:
+        desc = j.get("description", "").lower()
+        for kw in ["recommendation system", "ranking system", "search engine",
+                    "retrieval system", "recommendation engine", "search infrastructure",
+                    "ranking pipeline", "candidate matching"]:
+            if kw in desc:
+                shipped_what = kw
+                break
+        if shipped_what:
+            break
+
     # Assessment highlights
     assess = signals.get("skill_assessment_scores", {})
     assess_relevant = {k: v for k, v in assess.items()
@@ -596,8 +612,10 @@ def generate_reasoning(candidate):
     rr = signals.get("recruiter_response_rate", 0.0)
     notice = signals.get("notice_period_days", 60)
 
-    # Signal bits
+    # Positive signal bits
     sig_bits = []
+    if shipped_what:
+        sig_bits.append(f"has shipped a {shipped_what} to production")
     if github_score > 50:
         sig_bits.append(f"GitHub score of {int(github_score)}")
     if rr > 0.7:
@@ -607,11 +625,20 @@ def generate_reasoning(candidate):
     if assess_str:
         sig_bits.append(f"assessed in {assess_str}")
 
+    # Honest concern bits (gaps relative to JD ideal)
     gap_bits = []
+    if yoe < 5:
+        gap_bits.append(f"at {yoe} years, below the preferred 5-9 range for this senior role")
+    elif yoe > 12:
+        gap_bits.append(f"at {yoe} years, well above the 5-9 band the role targets")
     if notice > 90:
-        gap_bits.append(f"{notice}-day notice period")
+        gap_bits.append(f"{notice}-day notice period could slow onboarding")
     if github_score == -1:
-        gap_bits.append("no linked GitHub")
+        gap_bits.append("no linked GitHub profile")
+    if not assess:
+        gap_bits.append("no verified Redrob assessments on file")
+    if industry == "IT Services":
+        gap_bits.append("IT Services background rather than product company")
 
     sig_text = ", ".join(sig_bits[:2]) if sig_bits else ""
     gap_text = gap_bits[0] if gap_bits else ""
@@ -625,12 +652,16 @@ def generate_reasoning(candidate):
             text += f" Worth noting: {gap_text}."
     elif sid == 2:
         text = f"Currently {title} at {company} with {yoe} years of experience. {name} has worked with {skills_str}."
+        if sig_text:
+            text += f" {sig_text.capitalize()}."
         if gap_text:
             text += f" One concern: {gap_text}."
     elif sid == 3:
         text = f"{name} has {yoe} years in the field, currently at {company} as {title}. Relevant skills include {skills_str}."
         if sig_text:
             text += f" Also: {sig_text}."
+        if gap_text:
+            text += f" Gap: {gap_text}."
     elif sid == 4:
         text = f"At {company}, {name} holds the {title} role ({yoe} yrs exp). They've worked with {skills_str}"
         if sig_text:
@@ -642,6 +673,8 @@ def generate_reasoning(candidate):
         text = f"{yoe} years of experience, currently {title} at {company}. {name}'s profile shows {skills_str} experience."
         if sig_text:
             text += f" Plus {sig_text}."
+        if gap_text:
+            text += f" Flag: {gap_text}."
     else:
         text = f"{name} brings {yoe} years as {title} at {company}. Matched on {skills_str}."
         if sig_text:
