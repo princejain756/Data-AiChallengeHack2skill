@@ -642,14 +642,15 @@ def rank_candidates(candidates_file, output_file):
     # Sort: highest score first, tie-break by candidate_id ascending
     candidates.sort(key=lambda x: (-x[1], x[0]))
 
-    top_100 = candidates[:100]
+    top_n = candidates[:100]
+    output_count = len(top_n)
 
-    print(f"Writing top 100 candidates to {output_file}...")
+    print(f"Writing top {output_count} candidates to {output_file}...")
     with open(output_file, 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(["candidate_id", "rank", "score", "reasoning"])
 
-        for rank, (cid, score, candidate) in enumerate(top_100, 1):
+        for rank, (cid, score, candidate) in enumerate(top_n, 1):
             reasoning = generate_reasoning(candidate)
             writer.writerow([cid, rank, score, reasoning])
 
