@@ -35,13 +35,17 @@ Any candidate that trips one of these gets dropped before scoring.
 
 ### 2. Technical fit scoring (strongest signal)
 
-Three sub-signals, each contributing independently:
+Five sub-signals, each contributing independently:
 
 **Self-reported skills** - We group the candidate's skill list into core (vector DBs, embeddings, semantic search), strong (fine-tuning, LoRA, eval metrics, retrieval), and support (Python, PyTorch, NLP). Proficiency and duration both factor in, with diminishing returns past 24 months. Candidates who cover multiple categories get a combination bonus because the JD asks for the intersection, not just one area.
 
 **Verified assessments from Redrob** - The platform's own `skill_assessment_scores` field. These are actual test results, not self-reported. Categories like Information Retrieval, Vector Search, Learning to Rank, Embeddings, and Semantic Search map directly to the JD. A candidate with a 90/100 in Information Retrieval is weighted much more heavily than someone who just listed "information retrieval" as a skill. 94 of our top 100 have verified assessments.
 
 **Career history keywords (recency-weighted)** - We scan job descriptions and titles for relevant terms (embedding, vector, retrieval, ranking, etc.), but weight the current job at 1.0x, one job back at 0.65x, two back at 0.35x. Someone doing vector DB work right now matters more than someone who did it three jobs ago.
+
+**Profile summary mining** - The candidate's free-text summary often reveals experience that doesn't show up in structured fields. We scan for mentions of retrieval, vector, embedding, search, ranking, and specific tools like FAISS or Pinecone.
+
+**LangChain-only filter** - The JD says not to surface candidates whose AI experience is mostly recent LangChain/LlamaIndex usage without deeper ML fundamentals. Candidates who list LangChain but lack PyTorch, TensorFlow, or actual vector DB tools get a heavy penalty.
 
 ### 3. Role fit scoring
 
@@ -60,6 +64,7 @@ The raw score gets scaled by platform signals:
 - **Notice period**: under 30 days gets a bump, over 90 gets penalized
 - **GitHub activity**: score above 70 gets a 15% boost
 - **Interview completion rate**: shows follow-through on hiring processes
+- **Average response time**: candidates who reply within 24 hours get a 10% boost
 - **Open to work flag**: off means 0.8x multiplier
 
 ### 5. Tiebreakers
@@ -70,6 +75,8 @@ Small additive bonuses for:
 - Profile views received (visibility on platform)
 - Relevant certifications (ML, Deep Learning, Cloud specializations)
 - Profile completeness score
+- Career trajectory (progressive ML/AI titles get a bonus, regressions get penalized)
+- Job stability (average tenure over 30 months gets a bonus, under 12 months gets penalized for a founding team role)
 
 ## Output quality
 
@@ -77,8 +84,9 @@ Small additive bonuses for:
 |---|---|
 | Honeypots in top 100 | 0 |
 | Average YoE in top 100 | 6.3 years |
-| Candidates with verified assessments | 94/100 |
-| Top industries | AI/ML (23), Fintech (14), Internet (9) |
+| In ideal 5-9 YoE range | 78/100 |
+| Candidates with verified assessments | 96/100 |
+| Top industries | AI/ML (24), Fintech (14), Internet (8) |
 | Score monotonic decreasing | Yes |
 | Runtime (100K candidates) | ~10 seconds |
 
