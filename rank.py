@@ -240,6 +240,18 @@ def calculate_score(candidate):
 
     career_score = min(career_score, 2.5)
 
+    # A3b. HR-tech / marketplace domain bonus (JD: "Prior exposure to HR-tech,
+    # recruiting tech, or marketplace products" is explicitly desired)
+    hrtech_keywords = ["recruit", "hiring", "talent", "marketplace", "job board",
+                       "hr-tech", "applicant tracking", "staffing", "candidate matching"]
+    hrtech_bonus = 0.0
+    for job in sorted_jobs:
+        jdesc = job.get("description", "").lower()
+        jind = job.get("industry", "").lower()
+        if any(kw in jdesc or kw in jind for kw in hrtech_keywords):
+            hrtech_bonus = 0.25  # domain experience bonus
+            break
+
     # A4. Profile summary keyword mining
     summary = profile.get("summary", "").lower()
     summary_keywords = ["retrieval", "vector", "embedding", "search", "ranking",
@@ -299,6 +311,12 @@ def calculate_score(candidate):
     elif "junior" in current_title or "intern" in current_title:
         title_score *= 0.4
 
+    # JD line 29: "moved into 'architecture' or 'tech lead' roles" = deprioritize
+    # They want someone who still writes code
+    arch_only = ["architect", "director", "vp of", "head of", "chief"]
+    if any(a in current_title for a in arch_only) and "engineer" not in current_title:
+        title_score *= 0.5
+
     # B3. Company/industry quality
     company_score = 0.5  # default neutral
 
@@ -342,6 +360,9 @@ def calculate_score(candidate):
 
     role_fit = (yoe_score * 0.35 + title_score * 0.30 +
                 company_score * 0.20 + loc_score * 0.15) * 2.5
+
+    # B5. HR-tech domain bonus (additive, not part of weighted blend)
+    role_fit += hrtech_bonus
 
     # ========== C. AVAILABILITY & ENGAGEMENT (multiplier 0.3 - 1.4) ==========
 
@@ -513,6 +534,23 @@ def calculate_score(candidate):
     # D8. Verified identity (platform commitment)
     if signals.get("verified_email", False) and signals.get("verified_phone", False):
         tiebreak += 0.03
+
+    # D9. Search appearances (market demand - recruiters are looking for this person)
+    search_app = signals.get("search_appearance_30d", 0)
+    if search_app >= 500:
+        tiebreak += 0.08
+    elif search_app >= 200:
+        tiebreak += 0.04
+
+    # D10. Education field of study (CS/AI/ML fields are more relevant for this role)
+    cs_fields = {"computer science", "computer engineering", "artificial intelligence",
+                 "machine learning", "data science", "information technology",
+                 "electrical engineering", "electronics", "mathematics", "statistics"}
+    for e in education:
+        field = e.get("field_of_study", "").lower()
+        if field in cs_fields:
+            tiebreak += 0.04
+            break
 
     final = (tech_score + role_fit) * engagement_mult * cv_penalty + tiebreak
     return round(final, 4)
