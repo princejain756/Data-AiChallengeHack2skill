@@ -22,3 +22,5 @@ __pycache__/
 read_docx.py
 challenge.md
 ourgithubrepo.md
+template_pages/
+output_pages/
